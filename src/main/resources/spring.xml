@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        ">
+
+    <context:component-scan base-package="com.zsq"/>
+
+    <context:property-placeholder location="classpath:db.properties"/>
+
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.jdbc.Driver"></property>
+        <property name="jdbcUrl" value="jdbc:mysql://180.76.108.162:3306/ssm?characterEncoding=utf-8"></property>
+        <property name="user" value="root"></property>
+        <property name="password" value="1102576220"></property>
+        <property name="initialPoolSize" value="0"></property>
+        <property name="maxPoolSize" value="20"></property>
+    </bean>
+
+    <!--配置SqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--引入数据源-->
+        <property name="dataSource" ref="dataSource"></property>
+        <!--加载所有映射文件-->
+        <property name="mapperLocations" value="classpath:com/zsq/mapping/*.xml"></property>
+        <!--typeAliasesPackage对应实体类所在的包，这个时候会自动取包名作为别名-->
+        <property name="typeAliasesPackage" value="com.zking.pojo"></property>
+    </bean>
+
+
+    <!--配置Dao层：spring注入这个bean-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--将sqlSessionFactory注入com.zsq.dao包的类中，dao包中的类直接使用sqlSessionFactory-->
+        <!--<property name="sqlSessionFactory" value="sqlSessionFactory"></property>-->
+        <property name="basePackage" value="com.zsq.dao"></property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="defaultEncoding" value="utf-8"/>
+        <property name="maxUploadSize" value="99999999"/>
+        <property name="maxInMemorySize" value="45678"/>
+    </bean>
+
+    <bean id="jedisPool" class="redis.clients.jedis.JedisPool">
+        <constructor-arg name="host" value="180.76.108.162"></constructor-arg>
+        <constructor-arg name="port" value="6379"></constructor-arg>
+    </bean>
+
+    <bean id="redisCache" class="com.zsq.redis.RedisChahe">
+        <property name="jedisPool" ref="jedisPool"></property>
+    </bean>
+
+
+    <mvc:interceptors>
+        <!-- 配置Token拦截器，防止用户重复提交数据 -->
+        <mvc:interceptor>
+            <mvc:mapping path="/member/*"/><!--因为跳转数据的时候传TOKEN,提交的时候获取TOKEN 所以我把路径设为/member/*-->
+            <bean class="com.zsq.util.AvoidDuplicateSubmissionInterceptor"/><!--class文件路径改成你自己写得拦截器路径！！ -->
+        </mvc:interceptor>
+    </mvc:interceptors>
+</beans>
