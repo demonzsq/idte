@@ -12,6 +12,6 @@
 </head>
 <body>
 <a href="/selectAll">查看所有用户</a>
-<a href="/getAll">得到所有用户</a>
+<a href="/login">得到所有用户</a>
 </body>
 </html>
